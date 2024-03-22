@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "start": "sls offline"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.28",
+    "serverless-offline": "^13.3.3",
+    "serverless-plugin-typescript": "^2.1.5",
+    "typescript": "^5.4.2"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.2.1",
+    "typeorm": "^0.3.20"
+  }
+}

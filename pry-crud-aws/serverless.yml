@@ -1,0 +1,42 @@
+service: pry-crud-aws
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+functions:
+  apiGetUser:
+    handler: src/index.getUsers
+    events:
+      - httpApi:
+          path: /users
+          method: get
+  apiGetByUser:
+    handler: src/index.getByUsers
+    events:
+      - httpApi:
+          path: /users/{id}
+          method: get
+  apiPostUser:
+    handler: src/index.postUser
+    events:
+      - httpApi:
+          path: /users
+          method: post
+  apiPutUser:
+    handler: src/index.putUser
+    events:
+      - httpApi:
+          path: /users/{id}
+          method: put
+  apiDeleteUser:
+    handler: src/index.deleteUser
+    events:
+      - httpApi:
+          path: /users/{id}
+          method: delete
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline

@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "start": "sls offline"
+  },
+  "devDependencies": {
+    "serverless-offline": "^13.3.3",
+    "serverless-plugin-typescript": "^2.1.5",
+    "typescript": "^5.4.2"
+  }
+}
