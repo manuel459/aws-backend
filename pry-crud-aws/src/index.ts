@@ -1,67 +1,55 @@
 import "reflect-metadata"
 import { AppDataSource } from "./db"
 import { User } from "./Entities/Users";
+import { ResponseHandler } from "./interfaces/IResponse";
 
  async function main() {
-    const response: IResponse =  { succest: false, message: '', body:{}};
+    const response = new ResponseHandler();
     try {
-        await AppDataSource.initialize();
+        const connection = await AppDataSource.initialize();
         console.log('Conexion exitosa');
-        response.succest= true;
-        response.message = 'conexion exitosa';
+        return response.success(connection,'conexion exitosa', 200);
     } catch (error) {
-        response.message = 'Error en la conexion', error;
+        return response.error(500,error.message);
     }
-    return response;
 }
 
 export const getUsers =  async (request: any) => {
-    await main();
-    const response : IResponse = { succest: false, message: '', body: {}}
-    
+    const response = new ResponseHandler();
     try {
+        const connection = await main();
+
+        if(!connection.succest) return connection;
+
         const userList = await User.find();
-        response.succest = true;
-        response.message = 'Consulta exitosa';
-        response.body = userList;
-    } catch (err) {
-        if(err instanceof Error){
-            response.message = 'Ocurrio un Error', err.message;
-        }
-    }
-
-    return response;
-
+        await connection.body.close();
+        return response.success(userList,'Consulta exitosa', 200)
+    } catch (error){
+        return response.error(500, error.message);
+    } 
 }
 
 export const getByUsers =  async (request: any) => {
-    await main();
+    const connection = await main();
 
-    const response : IResponse = { succest: false, message: '', body: {}}
+    const response = new ResponseHandler();
     
     try {
         const id = request.pathParameters.id;
         const userList = await User.findOneBy({ id: parseInt(id)});
 
-        if(!userList) return response.message = 'Usuario no existente';
-
-        response.succest = true;
-        response.message = 'Consulta exitosa';
-        response.body = userList;
-    } catch (err) {
-        response.body = err;
-        if(err instanceof Error){
-            response.message = 'Ocurrio un Error: ', err.message;
-        }
+        if(!userList) return response.error(404,'Usuario no existente');
+        await connection.body.close();
+        return response.success(userList,'Consulta exitosa', 200);
+    } catch (error) {
+        return response.error(500, error.message);
     }
-
-    return response;
 
 }
 
 export const postUser = async (request: any) => {
     await main();
-    const response : IResponse = { succest: false, message: '', body: {}}
+    const response = new ResponseHandler();
 
     try {
         const reqBody = JSON.parse(request.body);
@@ -72,66 +60,42 @@ export const postUser = async (request: any) => {
         user.email = reqBody.email;
         console.log('objeto', user);
         await user.save();
-        response.succest = true;
-        response.message = 'Usuario insertado con exito';
-        response.body = user;
+        return response.success(user,'Consulta exitosa', 200);
     } catch (err) {
-        if(err instanceof Error){
-            response.message = 'Ocurrio un Error: ', err.message;
-        }
+        return response.error(500, err.message);
     }
-
-    return response;
 }
 
 
 export const putUser = async (request: any) => {
     await main();
-    const response : IResponse = { succest: false, message: '', body: {}}
+    const response = new ResponseHandler();
     try {
         const id = request.pathParameters.id;
         const user = await User.findOneBy({ id: parseInt(id) });
-        if(!user){
-            response.message = 'Usuario no existente';
-            return response;
-        } 
+        if(!user) return response.error(404,'Usuario no existe');
 
         await User.update({ id: parseInt(id) }, JSON.parse(request.body));
-        response.succest = true;
-        response.message = 'Usuario actualizado con exito';
-        response.body = user;
+        return response.success(user,'Usuario Actualizado con exito', 200);
     } catch (err) {
-        if(err instanceof Error){
-            response.message = 'Ocurrio un Error: ', err.message;
-        }
+        return response.error(500, err.message);
     }
-
-    return response;
 }
 
 
 export const deleteUser = async (request: any) => {
     await main();
-    const response: IResponse = { succest :false, message: '', body: {}}
+    const response = new ResponseHandler();
 
     try {
         const id = request.pathParameters.id;
         console.log(id);
         const user = await User.findOneBy({ id: parseInt(id) });
         console.log(user);
-        if(!user){
-            response.message = 'Usuario no existente';
-            return response;
-        } 
+        if(!user) return response.error(404,'Usuario no existe');
         await User.delete({ id: parseInt(id) });
-        response.succest = true;
-        response.message = 'Usuario eliminado con exito';
+        return response.success(user,'Usuario eliminado con exito', 200);
     } catch (err) {
-        if(err instanceof Error){
-            response.message = 'Ocurrio un Error';
-            response.body = { error : { message : err.message , nombre: err.name}  };
-        }
+        return response.error(500, err.message);
     }
-
-    return response;
 }

@@ -13,62 +13,54 @@ exports.deleteUser = exports.putUser = exports.postUser = exports.getByUsers = e
 require("reflect-metadata");
 const db_1 = require("./db");
 const Users_1 = require("./Entities/Users");
+const IResponse_1 = require("./interfaces/IResponse");
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        const response = { succest: false, message: '', body: {} };
+        const response = new IResponse_1.ResponseHandler();
         try {
-            yield db_1.AppDataSource.initialize();
+            const connection = yield db_1.AppDataSource.initialize();
             console.log('Conexion exitosa');
-            response.succest = true;
-            response.message = 'conexion exitosa';
+            return response.success(connection, 'conexion exitosa', 200);
         }
         catch (error) {
-            response.message = 'Error en la conexion', error;
+            return response.error(500, error.message);
         }
-        return response;
     });
 }
 const getUsers = (request) => __awaiter(void 0, void 0, void 0, function* () {
-    yield main();
-    const response = { succest: false, message: '', body: {} };
+    const response = new IResponse_1.ResponseHandler();
     try {
+        const connection = yield main();
+        if (!connection.succest)
+            return connection;
         const userList = yield Users_1.User.find();
-        response.succest = true;
-        response.message = 'Consulta exitosa';
-        response.body = userList;
+        yield connection.body.close();
+        return response.success(userList, 'Consulta exitosa', 200);
     }
-    catch (err) {
-        if (err instanceof Error) {
-            response.message = 'Ocurrio un Error', err.message;
-        }
+    catch (error) {
+        return response.error(500, error.message);
     }
-    return response;
 });
 exports.getUsers = getUsers;
 const getByUsers = (request) => __awaiter(void 0, void 0, void 0, function* () {
-    yield main();
-    const response = { succest: false, message: '', body: {} };
+    const connection = yield main();
+    const response = new IResponse_1.ResponseHandler();
     try {
         const id = request.pathParameters.id;
         const userList = yield Users_1.User.findOneBy({ id: parseInt(id) });
         if (!userList)
-            return response.message = 'Usuario no existente';
-        response.succest = true;
-        response.message = 'Consulta exitosa';
-        response.body = userList;
+            return response.error(404, 'Usuario no existente');
+        yield connection.body.close();
+        return response.success(userList, 'Consulta exitosa', 200);
     }
-    catch (err) {
-        response.body = err;
-        if (err instanceof Error) {
-            response.message = 'Ocurrio un Error: ', err.message;
-        }
+    catch (error) {
+        return response.error(500, error.message);
     }
-    return response;
 });
 exports.getByUsers = getByUsers;
 const postUser = (request) => __awaiter(void 0, void 0, void 0, function* () {
     yield main();
-    const response = { succest: false, message: '', body: {} };
+    const response = new IResponse_1.ResponseHandler();
     try {
         const reqBody = JSON.parse(request.body);
         console.log(reqBody);
@@ -78,63 +70,44 @@ const postUser = (request) => __awaiter(void 0, void 0, void 0, function* () {
         user.email = reqBody.email;
         console.log('objeto', user);
         yield user.save();
-        response.succest = true;
-        response.message = 'Usuario insertado con exito';
-        response.body = user;
+        return response.success(user, 'Consulta exitosa', 200);
     }
     catch (err) {
-        if (err instanceof Error) {
-            response.message = 'Ocurrio un Error: ', err.message;
-        }
+        return response.error(500, err.message);
     }
-    return response;
 });
 exports.postUser = postUser;
 const putUser = (request) => __awaiter(void 0, void 0, void 0, function* () {
     yield main();
-    const response = { succest: false, message: '', body: {} };
+    const response = new IResponse_1.ResponseHandler();
     try {
         const id = request.pathParameters.id;
         const user = yield Users_1.User.findOneBy({ id: parseInt(id) });
-        if (!user) {
-            response.message = 'Usuario no existente';
-            return response;
-        }
+        if (!user)
+            return response.error(404, 'Usuario no existe');
         yield Users_1.User.update({ id: parseInt(id) }, JSON.parse(request.body));
-        response.succest = true;
-        response.message = 'Usuario actualizado con exito';
-        response.body = user;
+        return response.success(user, 'Usuario Actualizado con exito', 200);
     }
     catch (err) {
-        if (err instanceof Error) {
-            response.message = 'Ocurrio un Error: ', err.message;
-        }
+        return response.error(500, err.message);
     }
-    return response;
 });
 exports.putUser = putUser;
 const deleteUser = (request) => __awaiter(void 0, void 0, void 0, function* () {
     yield main();
-    const response = { succest: false, message: '', body: {} };
+    const response = new IResponse_1.ResponseHandler();
     try {
         const id = request.pathParameters.id;
         console.log(id);
         const user = yield Users_1.User.findOneBy({ id: parseInt(id) });
         console.log(user);
-        if (!user) {
-            response.message = 'Usuario no existente';
-            return response;
-        }
+        if (!user)
+            return response.error(404, 'Usuario no existe');
         yield Users_1.User.delete({ id: parseInt(id) });
-        response.succest = true;
-        response.message = 'Usuario eliminado con exito';
+        return response.success(user, 'Usuario eliminado con exito', 200);
     }
     catch (err) {
-        if (err instanceof Error) {
-            response.message = 'Ocurrio un Error';
-            response.body = { error: { message: err.message, nombre: err.name } };
-        }
+        return response.error(500, err.message);
     }
-    return response;
 });
 exports.deleteUser = deleteUser;
